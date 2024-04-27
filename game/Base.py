@@ -21,107 +21,118 @@ top_left_y = s_height - play_height
 
 # SHAPE FORMATS
 
-S = [['.....',
-      '......',
-      '..00..',
-      '.00...',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..00.',
-      '...0.',
-      '.....']]
+S = [[
+      '.00',
+      '00.',
+      '...'],
+      [
+      '.0.',
+      '.00',
+      '..0'],
+      [
+      '...',
+      '.00',
+      '00.'],
+      [
+      '0..',
+      '00.',
+      '.0.']]
 
-Z = [['.....',
-      '.....',
-      '.00..',
-      '..00.',
-      '.....'],
-     ['.....',
-      '..0..',
-      '.00..',
-      '.0...',
-      '.....']]
+Z = [[
+      '00.',
+      '.00',
+      '...'],
+      [
+      '..0',
+      '.00',
+      '.0.'],
+      [
+      '...',
+      '00.',
+      '.00'],
+      [
+      '.0.',
+      '00.',
+      '0..']]
 
-I = [['..0..',
-      '..0..',
-      '..0..',
-      '..0..',
-      '.....'],
-     ['.....',
-      '0000.',
-      '.....',
-      '.....',
-      '.....']]
+I = [
+        ['....',
+         '0000',
+         '....',
+         '....'],
 
-O = [['.....',
-      '.....',
-      '.00..',
-      '.00..',
-      '.....']]
+        ['..0.',
+         '..0.',
+         '..0.',
+         '..0.'],
 
-J = [['.....',
-      '.0...',
-      '.000.',
-      '.....',
-      '.....'],
-     ['.....',
-      '..00.',
-      '..0..',
-      '..0..',
-      '.....'],
-     ['.....',
-      '.....',
-      '.000.',
-      '...0.',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..0..',
-      '.00..',
-      '.....']]
+        ['....',
+         '....',
+         '0000',
+         '....'],
 
-L = [['.....',
-      '...0.',
-      '.000.',
-      '.....',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..0..',
-      '..00.',
-      '.....'],
-     ['.....',
-      '.....',
-      '.000.',
-      '.0...',
-      '.....'],
-     ['.....',
-      '.00..',
-      '..0..',
-      '..0..',
-      '.....']]
+        ['.0..',
+         '.0..',
+         '.0..',
+         '.0..']
 
-T = [['.....',
-      '..0..',
-      '.000.',
-      '.....',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..00.',
-      '..0..',
-      '.....'],
-     ['.....',
-      '.....',
-      '.000.',
-      '..0..',
-      '.....'],
-     ['.....',
-      '..0..',
-      '.00..',
-      '..0..',
-      '.....']]
+    ]
+
+O = [[
+      '00',
+      '00'
+      ]]
+
+J = [[
+      '0..',
+      '000',
+      '...'],
+      [
+      '.00',
+      '.0.',
+      '.0.'],
+      [
+      '...',
+      '000',
+      '..0'],
+      [
+      '.0.',
+      '.0.',
+      '00.']]
+
+L = [[
+      '..0',
+      '000',
+      '...'],
+      [
+      '.0.',
+      '.0.',
+      '.00'],
+      [
+      '...',
+      '000',
+      '0..'],
+      [
+      '00.',
+      '.0.',
+      '.0.']]
+
+T = [[
+      '.0.',
+      '000',
+      '...'],
+      [
+      '.0.',
+      '.00',
+      '.0.'],
+      [
+      '...',
+      '000',
+      '.0.'],
+      [
+      '.0.',
+      '00.',
+      '.0.']]
 
 shapes = [S, Z, I, O, J, L, T]
 shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (0, 0, 255), (128, 0, 128)]
@@ -149,6 +160,7 @@ def create_grid(locked_positions={}):
                 grid[i][j] = c
      return grid
 
+# Conver the format into game space coordinates
 def convert_shape_format(shape):
     positions = []
     format = shape.shape[shape.rotation % len(shape.shape)]
@@ -158,17 +170,15 @@ def convert_shape_format(shape):
         for j, column in enumerate(row):
             if column == '0':
                 positions.append((shape.x + j, shape.y + i))
- 
-    for i, pos in enumerate(positions):
-        positions[i] = (pos[0] - 2, pos[1] - 4)
- 
     return positions
 
 def valid_space(shape, grid):
+
+    # check for empty spaces
     accepted_positions = [[(j, i) for j in range(10) if grid[i][j] == (0,0,0)] for i in range(20)]
     accepted_positions = [j for sub in accepted_positions for j in sub]
     formatted = convert_shape_format(shape)
- 
+    print(accepted_positions)
     for pos in formatted:
         if pos not in accepted_positions:
             if pos[1] > -1:
@@ -288,7 +298,6 @@ def main(win):
     fall_time = 0
     level_time = 0
     score = 0
-    #last_score = max_score()
     while run:
 
         level_time += clock.get_rawtime()
@@ -330,7 +339,7 @@ def main(win):
                     # rotate shape
                     current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
                     if not valid_space(current_piece, grid):
-                        current_piece.arotation = current_piece.rotation - 1 % len(current_piece.shape)
+                        current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
  
                 if event.key == pygame.K_DOWN:
                     # move shape down
@@ -362,21 +371,7 @@ def main(win):
             pygame.display.update()
             pygame.time.delay(1500)
             run = False
-            ##update_score(score)
-# def update_score(nscore):
-#     score = max_score()
-#     with open('scores.txt', 'w+') as f:
-#         if int(score) > nscore:
-#             f.write(str(score))
-#         else:
-#             f.write(str(nscore))
 
-# def max_score():
-#     with open('scores.txt', 'r+') as f:
-#         lines = f.readlines()
-#         score = lines[0].strip()
-
-#     return score
 def main_menu(win):  # *
     run = True
     while run:
