@@ -418,7 +418,7 @@ class Base():
 
                 else:
                     self.onGround = False
-            
+            print(self.onGround)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.run = False
@@ -483,13 +483,30 @@ class Base():
                         self.score += 2*distance
                         self.change_piece = True
                         self.moves_slid = self.settle
+
+
+
             shape_pos = self.convert_shape_format(self.current_piece)
+
+            
+            # another check to see if we're still on the ground
+            self.current_piece.y += 1
+            if not (self.valid_space(self.current_piece, self.grid)) and self.current_piece.y > 0:
+
+                # we have hit a bottom collision
+                self.onGround = True
+            else:
+                self.onGround = False
+            self.current_piece.y -= 1
 
             # add color of piece to the grid for drawing
             for i in range(len(shape_pos)):
                 x, y = shape_pos[i]
                 if y > -1: # If we are not above the screen
                     self.grid[y][x] = self.current_piece.color
+
+
+
             if self.onGround and self.moves_slid >= self.settle:
                 self.change_piece = True
 
@@ -517,7 +534,6 @@ class Base():
                 pygame.display.update()
                 pygame.time.delay(1500)
                 self.run = False
-
     def main_menu(self,win):  # *
         run = True
         while run:
@@ -544,7 +560,10 @@ class Base():
     # handles the setup of the game; found at the top of the normal game entrypoint
     def setup(self):
         self.locked_positions = {}  # (x,y):(255,0,0)
-        self.grid = self.create_grid(self.locked_positions)
+        self.grid = []
+        self.simple_grid = []
+        # populates both grid and simple_grid
+        self.create_simple_grid(self.locked_positions)
         self.change_piece = False
         self.run = True
         self.current_piece = self.get_shape()
@@ -556,12 +575,151 @@ class Base():
         self.score = 0
         # can only initiate swap if a piece has been placed
         self.swap = False
+        
+        # exclusive to the gym env
+        self.current_piece_format = self.convert_shape_format(self.current_piece)
+        self.onGround = False
+        self.moves_slid = 0
+        self.done = False
+        self.win = pygame.display.set_mode((self.s_width, self.s_height))
+        pygame.display.set_caption('Tetris')
+        
+        # return the initial start state
+        # State includes the following:
+        # grid
+        # the current piece (in terms of the spaces it takes up on the board)
+        # the list of the next 4 pieces (in terms of index in the shapes list)
+        # the hold piece index
+        next_pieces_ind = [self.shapes.index(x) for x in self.next_piece]
+        hold_piece_ind = -1
+        
+        return [self.grid, self.current_piece_format, next_pieces_ind, hold_piece_ind]
 
     # manipulates the env using the action
     def action(self, action):
-        return None
+        # 0 - Left
+        # 1 - Right
+        # 2 - Up (rotate)
+        # 3 - Down
+        # 4 - C (swap)
+        # 5 - space
+        self.grid = self.create_grid(self.locked_positions)
+        match action:
+            case 0:
+                # L
+                self.current_piece.x -= 1
+                if not self.valid_space(self.current_piece, self.grid):
+                    self.current_piece.x += 1
+                elif self.onGround:
+                    self.moves_slid += 1
+            case 1:
+                # R
+                self.current_piece.x += 1
+                if not self.valid_space(self.current_piece, self.grid):
+                    self.current_piece.x -= 1
+                elif self.onGround:
+                    self.moves_slid += 1
+            case 2:
+                # rotate shape
+                self.current_piece.rotation = self.current_piece.rotation + 1 % len(self.current_piece.shape)
+                if not self.valid_space(self.current_piece, self.grid):
+                    displacement = self.wall_rotation_check(self.current_piece,self.grid)
+                    if not displacement:
+                        self.current_piece.rotation = self.current_piece.rotation - 1 % len(self.current_piece.shape)
 
+            case 3:
+                # move shape down
+                self.current_piece.y += 1
+                if not self.valid_space(self.current_piece, self.grid):
+                    self.current_piece.y -= 1
+                    # instantly set the piece down
+                    if not self.onGround:
+                        self.onGround = True
+                    else:
+                        self.moves_slid = self.settle 
+                else:
+                    self.score += 1
+            case 4:
+                if self.swap:
+                    # handle piece change if necessary
+                    # handle the first swap
+                    temp_piece = self.hold_piece
+                    self.hold_piece = self.current_piece
+                    if temp_piece is not None:
+                        self.current_piece = temp_piece
+                    else:
+                        self.current_piece = self.next_piece.pop(0)
+                        self.next_piece.append(self.get_shape())
+                    self.hold_piece.reset_position() #reset to top
+                    self.swap = True
+                    self.moves_slid = 0
+                    self.onGround = False
+    
+            case 5:
+                # handle immediate drop
+                distance = 1
+                self.current_piece.y += 1
+                while self.valid_space(self.current_piece,self.grid):
+                    self.current_piece.y += 1
+                    distance += 1
+                distance -= 1
+                self.current_piece.y -= 1
+                self.score += 2*distance
+                self.change_piece = True
+                self.moves_slid = self.settle
+            
+            
+        # update the format of the piece    
+        self.current_piece_format = self.convert_shape_format(self.current_piece)
 
+         # add color of piece to the grid for drawing
+        for i in range(len(self.current_piece_format)):
+            x, y = self.current_piece_format[i]
+            if y > -1: # If we are not above the screen
+                self.grid[y][x] = self.current_piece.color
+
+        if self.onGround and self.moves_slid >= self.settle:
+            self.change_piece = True
+
+        # IF PIECE HIT GROUND
+        if self.change_piece:
+            for pos in self.current_piece_format:
+                p = (pos[0], pos[1])
+                self.locked_positions[p] = self.current_piece.color
+            self.current_piece = self.next_piece.pop(0)
+            self.next_piece.append(self.get_shape())
+            self.change_piece = False
+
+            rows_cleared = self.clear_rows(self.grid,self.locked_positions)
+            self.score += self.scoring_func(self.locked_positions,rows_cleared)
+            self.swap = False
+            self.moves_slid = 0 
+            self.onGround = False
+
+        if self.check_lost(self.locked_positions):
+            self.done = True
+
+        next_pieces_ind = [self.shapes.index(x) for x in self.next_piece]
+        hold_piece_ind = -1
+        # TODO handle the reward function
+        return [self.grid, self.current_piece_format, next_pieces_ind, hold_piece_ind], 0, self.done,{}
+    
+    def render(self):
+        self.draw_window(self.win,self.grid,self.score,0)
+        self.draw_next_shape(self.next_piece, self.win)
+        self.draw_hold_shape(self.hold_piece,self.win)
+        pygame.display.update()
+
+    # same logic as create grid but also populates the simple grid as well
+    def create_simple_grid(self,locked_positions={}):
+        self.grid = [[(0,0,0) for _ in range(10)] for _ in range(23)]
+        self.simple_grid = [[0 for _ in range(10)] for _ in range(23)]
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[i])):
+                if (j,i) in locked_positions:
+                    c = locked_positions[(j,i)]
+                    self.grid[i][j] = c
+                    self.simple_grid[i][j] = 1
 if __name__ == '__main__':
     game = Base()
     game.start_game()
