@@ -198,6 +198,42 @@ def valid_space(shape, grid):
  
     return True
 
+# handles special instance of rotation
+# in Tetr.io the frame containing the piece is shifted one right/left
+# if the rotation would make a collision with the sides
+# returns the x offset needed for the correction (0 if none is needed)
+def wall_rotation_check(shape,grid):
+    
+
+
+    # left wall check
+    shape.x += 1
+    if valid_space(shape,grid):
+        return True
+    shape.x -= 1
+
+    shape.x -= 1
+    # right wall check
+    if valid_space(shape,grid):
+        return True
+    shape.x += 1
+
+
+    # need to do this for the long pieces
+    # one side will protrude by 2
+    shape.x += 2
+    if valid_space(shape,grid):
+        return True
+    shape.x -= 2
+
+    shape.x -= 2
+    # right wall check
+    if valid_space(shape,grid):
+        return True
+    shape.x += 2
+
+    return False
+
 def check_lost(positions):
     for pos in positions:
         x, y = pos
@@ -207,7 +243,7 @@ def check_lost(positions):
 
 def get_shape():
     global shapes, shape_colors
-    return Piece(random.choice(shapes))
+    return Piece(shapes[2])
 
 def draw_text_middle(surface, text, size, color):
     font = pygame.font.SysFont("comicsans", size, bold=True)
@@ -375,7 +411,9 @@ def main(win):
                     # rotate shape
                     current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
                     if not valid_space(current_piece, grid):
-                        current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
+                        displacement = wall_rotation_check(current_piece,grid)
+                        if not displacement:
+                            current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
  
                 elif event.key == pygame.K_DOWN:
                     # move shape down
