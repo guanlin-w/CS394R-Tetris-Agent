@@ -41,7 +41,6 @@ class Base():
         # Additional Game settings
         self.look_ahead = 4 # denotes the number of pieces you can look ahead for
 
-
         # SHAPE FORMATS
 
         S = [[
@@ -162,7 +161,8 @@ class Base():
 
         # the x offset is 3 blocks except for the O piece 
         self.shape_start = [(3,0),(3,0),(3,0),(4,0),(3,0),(3,0),(3,0)]
-        # index 0 - 6 represent shape
+        # allow for the piece to slide for 4 moves before settling on the ground
+        self.settle = 4 
 
 
  
@@ -376,130 +376,147 @@ class Base():
         self.draw_grid(surface, grid)
 
     def main(self,win):
-        global grid
     
-        locked_positions = {}  # (x,y):(255,0,0)
-        grid = self.create_grid(locked_positions)
-        change_piece = False
-        run = True
-        current_piece = self.get_shape()
-        next_piece = [self.get_shape() for _ in range(self.look_ahead)]
-        hold_piece = None
-        clock = pygame.time.Clock()
-        fall_time = 0
-        level_time = 0
-        score = 0
-
+        self.locked_positions = {}  # (x,y):(255,0,0)
+        self.grid = self.create_grid(self.locked_positions)
+        self.change_piece = False
+        self.run = True
+        self.current_piece = self.get_shape()
+        self.next_piece = [self.get_shape() for _ in range(self.look_ahead)]
+        self.hold_piece = None
+        self.clock = pygame.time.Clock()
+        self.fall_time = 0
+        self.level_time = 0
+        self.score = 0
         # can only initiate swap if a piece has been placed
-        swap = False
-        while run:
-
-            level_time += clock.get_rawtime()
-            if level_time/1000 > 5:
-                level_time = 0
-                if level_time > 0.12:
-                    level_time -= 0.005
+        self.swap = False
+        
+        # allow the pieces to be able to slide before settling
+        # can only slide for self.settle per piece 
+        self.onGround = False
+        self.moves_slid = 0 
+        while self.run:
+            self.level_time += self.clock.get_rawtime()
+            if self.level_time/1000 > 5:
+                self.level_time = 0
+                if self.level_time > 0.12:
+                    self.level_time -= 0.005
             fall_speed = 0.27
             
-            grid = self.create_grid(locked_positions)
-            fall_time += clock.get_rawtime()
-            clock.tick()
+            self.grid = self.create_grid(self.locked_positions)
+            self.fall_time += self.clock.get_rawtime()
+            self.clock.tick()
         
             # PIECE FALLING CODE
-            if fall_time/1000 >= fall_speed:
-                fall_time = 0
-                current_piece.y += 1
-                if not (self.valid_space(current_piece, grid)) and current_piece.y > 0:
-                    current_piece.y -= 1
-                    change_piece = True
+            if self.fall_time/1000 >= fall_speed:
+                self.fall_time = 0
+                self.current_piece.y += 1
+                if not (self.valid_space(self.current_piece, self.grid)) and self.current_piece.y > 0:
+                    self.current_piece.y -= 1
+                    # we have hit a bottom collision
+                    self.onGround = True
+
+                else:
+                    self.onGround = False
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    run = False
+                    self.run = False
                     pygame.display.quit()
                     quit()
     
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        current_piece.x -= 1
-                        if not self.valid_space(current_piece, grid):
-                            current_piece.x += 1
+                        self.current_piece.x -= 1
+                        if not self.valid_space(self.current_piece, self.grid):
+                            self.current_piece.x += 1
+                        elif self.onGround:
+                            self.moves_slid += 1
     
                     elif event.key == pygame.K_RIGHT:
-                        current_piece.x += 1
-                        if not self.valid_space(current_piece, grid):
-                            current_piece.x -= 1
+                        self.current_piece.x += 1
+                        if not self.valid_space(self.current_piece, self.grid):
+                            self.current_piece.x -= 1
+                        elif self.onGround:
+                            self.moves_slid += 1
                     elif event.key == pygame.K_UP:
                         # rotate shape
-                        current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
-                        if not self.valid_space(current_piece, grid):
-                            displacement = self.wall_rotation_check(current_piece,grid)
+                        self.current_piece.rotation = self.current_piece.rotation + 1 % len(self.current_piece.shape)
+                        if not self.valid_space(self.current_piece, self.grid):
+                            displacement = self.wall_rotation_check(self.current_piece,self.grid)
                             if not displacement:
-                                current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
+                                self.current_piece.rotation = self.current_piece.rotation - 1 % len(self.current_piece.shape)
     
                     elif event.key == pygame.K_DOWN:
                         # move shape down
-                        current_piece.y += 1
-                        if not self.valid_space(current_piece, grid):
-                            current_piece.y -= 1
+                        self.current_piece.y += 1
+                        if not self.valid_space(self.current_piece, self.grid):
+                            self.current_piece.y -= 1
+                            # instantly set the piece down
+                            self.moves_slid = self.settle 
                         else:
-                            score += 1
-                    elif event.key == pygame.K_c and not swap:
+                            self.score += 1
+                    elif event.key == pygame.K_c and not self.swap:
                         # handle piece change if necessary
                         # handle the first swap
-                        temp_piece = hold_piece
-                        hold_piece = current_piece
+                        temp_piece = self.hold_piece
+                        self.hold_piece = self.current_piece
                         if temp_piece is not None:
-                            current_piece = temp_piece
+                            self.current_piece = temp_piece
                         else:
-                            current_piece = next_piece.pop(0)
-                            next_piece.append(self.get_shape())
-                        hold_piece.reset_position() #reset to top
-                        swap = True
+                            self.current_piece = self.next_piece.pop(0)
+                            self.next_piece.append(self.get_shape())
+                        self.hold_piece.reset_position() #reset to top
+                        self.swap = True
+                        self.moves_slid = 0
+                        self.onGround = False
+                
                     if event.key == pygame.K_SPACE:
                         # handle immediate drop
                         distance = 1
-                        current_piece.y += 1
-                        while self.valid_space(current_piece,grid):
-                            current_piece.y += 1
+                        self.current_piece.y += 1
+                        while self.valid_space(self.current_piece,self.grid):
+                            self.current_piece.y += 1
                             distance += 1
                         distance -= 1
-                        current_piece.y -= 1
-                        score += 2*distance
-                        change_piece = True
-            shape_pos = self.convert_shape_format(current_piece)
+                        self.current_piece.y -= 1
+                        self.score += 2*distance
+                        self.change_piece = True
+                        self.moves_slid = self.settle
+            shape_pos = self.convert_shape_format(self.current_piece)
 
             # add color of piece to the grid for drawing
             for i in range(len(shape_pos)):
                 x, y = shape_pos[i]
                 if y > -1: # If we are not above the screen
-                    grid[y][x] = current_piece.color
-
-
+                    self.grid[y][x] = self.current_piece.color
+            if self.onGround and self.moves_slid >= self.settle:
+                self.change_piece = True
 
             # IF PIECE HIT GROUND
-            if change_piece:
+            if self.change_piece:
                 for pos in shape_pos:
                     p = (pos[0], pos[1])
-                    locked_positions[p] = current_piece.color
-                current_piece = next_piece.pop(0)
-                next_piece.append(self.get_shape())
-                change_piece = False
+                    self.locked_positions[p] = self.current_piece.color
+                self.current_piece = self.next_piece.pop(0)
+                self.next_piece.append(self.get_shape())
+                self.change_piece = False
 
-                rows_cleared = self.clear_rows(grid,locked_positions)
-                score += self.scoring_func(locked_positions,rows_cleared)
-                swap = False
+                rows_cleared = self.clear_rows(self.grid,self.locked_positions)
+                self.score += self.scoring_func(self.locked_positions,rows_cleared)
+                self.swap = False
+                self.moves_slid = 0 
 
 
-            self.draw_window(win,grid,score,0)
-            self.draw_next_shape(next_piece, win)
-            self.draw_hold_shape(hold_piece,win)
+            self.draw_window(win,self.grid,self.score,0)
+            self.draw_next_shape(self.next_piece, win)
+            self.draw_hold_shape(self.hold_piece,win)
             pygame.display.update()
-            if self.check_lost(locked_positions):
+            if self.check_lost(self.locked_positions):
                 self.draw_text_middle(win, "YOU LOST!", 80, (255,255,255))
                 pygame.display.update()
                 pygame.time.delay(1500)
-                run = False
+                self.run = False
 
     def main_menu(self,win):  # *
         run = True
@@ -519,6 +536,30 @@ class Base():
         win = pygame.display.set_mode((self.s_width, self.s_height))
         self.main_menu(win)  # start game
         pygame.display.set_caption('Tetris')
+
+
+
+    # These functions are exclusively used for the gym env
+    
+    # handles the setup of the game; found at the top of the normal game entrypoint
+    def setup(self):
+        self.locked_positions = {}  # (x,y):(255,0,0)
+        self.grid = self.create_grid(self.locked_positions)
+        self.change_piece = False
+        self.run = True
+        self.current_piece = self.get_shape()
+        self.next_piece = [self.get_shape() for _ in range(self.look_ahead)]
+        self.hold_piece = None
+        self.clock = pygame.time.Clock()
+        self.fall_time = 0
+        self.level_time = 0
+        self.score = 0
+        # can only initiate swap if a piece has been placed
+        self.swap = False
+
+    # manipulates the env using the action
+    def action(self, action):
+        return None
 
 
 if __name__ == '__main__':
