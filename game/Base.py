@@ -244,7 +244,7 @@ def check_lost(positions):
 
 def get_shape():
     global shapes, shape_colors
-    return Piece(shapes[2])
+    return Piece(shapes[2])#Piece(random.choice(shapes))
 
 def draw_text_middle(surface, text, size, color):
     font = pygame.font.SysFont("comicsans", size, bold=True)
@@ -276,6 +276,7 @@ def clear_rows(grid, locked):
                     del locked[(j, i)]
                 except:
                     continue
+    # handle row consolidation
     if inc > 0:
         for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
             x, y = key
@@ -283,6 +284,34 @@ def clear_rows(grid, locked):
                 newKey = (x, y + inc)
                 locked[newKey] = locked.pop(key)
     return inc
+
+# check if the grid is empty
+# needed to check if there was a full clear
+def grid_empty(grid):
+    for i in range(len(grid)-1,-1,-1):
+        row = grid[i]
+        for color in row:
+            if color in shape_colors:
+                return False
+    return True
+
+def scoring_func(grid,rows):
+    score = 0
+
+    match rows:
+        case 1:
+            score += 100
+        case 2:
+            score += 300
+        case 3:
+            score += 500
+        case 4:
+            score += 800
+    if len(grid) == 0:
+        score += 3500 
+    return score
+
+
 
 def draw_next_shape(shapes, surface):
     font = pygame.font.SysFont('comicsans', 30)
@@ -421,6 +450,8 @@ def main(win):
                     current_piece.y += 1
                     if not valid_space(current_piece, grid):
                         current_piece.y -= 1
+                    else:
+                        score += 1
                 elif event.key == pygame.K_c and not swap:
                     # handle piece change if necessary
                     # handle the first swap
@@ -435,10 +466,15 @@ def main(win):
                     swap = True
                 if event.key == pygame.K_SPACE:
                     # handle immediate drop
+                    distance = 1
                     current_piece.y += 1
                     while valid_space(current_piece,grid):
                         current_piece.y += 1
+                        distance += 1
+                    distance -= 1
                     current_piece.y -= 1
+                    score += 2*distance
+                    change_piece = True
         shape_pos = convert_shape_format(current_piece)
 
         # add color of piece to the grid for drawing
@@ -457,7 +493,9 @@ def main(win):
             current_piece = next_piece.pop(0)
             next_piece.append(get_shape())
             change_piece = False
-            score += clear_rows(grid,locked_positions)*10
+
+            rows_cleared = clear_rows(grid,locked_positions)
+            score += scoring_func(locked_positions,rows_cleared)
             swap = False
 
 
