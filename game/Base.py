@@ -19,10 +19,8 @@ class Piece(object):
     def reset_position(self):
         self.x = self.start_pos[0]
         self.y = self.start_pos[1]
+
 class Base():
-
-
-
 
     def __init__(self):
         pygame.font.init()
@@ -157,15 +155,12 @@ class Base():
             '.0.']]
 
         self.shapes = [S, Z, I, O, J, L, T]
-        self.shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (0, 0, 255), (128, 0, 128)]
+        self.shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (0, 0, 255), (255, 165, 0), (192, 0, 192)]
 
         # the x offset is 3 blocks except for the O piece 
         self.shape_start = [(3,0),(3,0),(3,0),(4,0),(3,0),(3,0),(3,0)]
         # allow for the piece to slide for 4 moves before settling on the ground
         self.settle = 4 
-
-
- 
 
     # determines how to draw the grid
     def create_grid(self,locked_positions={}):
