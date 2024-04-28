@@ -7,23 +7,19 @@ class Piece(object):
     rows = 20
     columns = 10
     def __init__(self,shape,game):
-        index = game.shapes.index(shape)
-        self.start_pos = game.shape_start[index]
+        self.index = game.shapes.index(shape)
+        self.start_pos = game.shape_start[self.index]
 
         self.x = self.start_pos[0]
         self.y = self.start_pos[1]
         self.shape = shape
-        self.color = game.shape_colors[index]
+        self.color = game.shape_colors[self.index]
         self.rotation = 0 # 0-3 determines the rotation
 
     def reset_position(self):
         self.x = self.start_pos[0]
         self.y = self.start_pos[1]
 class Base():
-
-
-
-
     def __init__(self):
         pygame.font.init()
         # screen global var
@@ -418,7 +414,6 @@ class Base():
 
                 else:
                     self.onGround = False
-            print(self.onGround)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.run = False
@@ -587,13 +582,13 @@ class Base():
         # return the initial start state
         # State includes the following:
         # grid
-        # the current piece (in terms of the spaces it takes up on the board)
+        # the current piece (x,y) of the bounding box. The current shape index and the rotation index
         # the list of the next 4 pieces (in terms of index in the shapes list)
         # the hold piece index
-        next_pieces_ind = [self.shapes.index(x) for x in self.next_piece]
+        next_pieces_ind = [x.index for x in self.next_piece]
         hold_piece_ind = -1
-        
-        return [self.grid, self.current_piece_format, next_pieces_ind, hold_piece_ind]
+        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind]
+
 
     # manipulates the env using the action
     def action(self, action):
@@ -699,10 +694,11 @@ class Base():
         if self.check_lost(self.locked_positions):
             self.done = True
 
-        next_pieces_ind = [self.shapes.index(x) for x in self.next_piece]
+        next_pieces_ind = [x.index for x in self.next_piece]
         hold_piece_ind = -1
         # TODO handle the reward function
-        return [self.grid, self.current_piece_format, next_pieces_ind, hold_piece_ind], 0, self.done,{}
+        # Will depend on the environment i.e 40 lines vs 2 min blitz
+        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind], 0, self.done,{}
     
     def render(self):
         self.draw_window(self.win,self.grid,self.score,0)
@@ -713,13 +709,19 @@ class Base():
     # same logic as create grid but also populates the simple grid as well
     def create_simple_grid(self,locked_positions={}):
         self.grid = [[(0,0,0) for _ in range(10)] for _ in range(23)]
-        self.simple_grid = [[0 for _ in range(10)] for _ in range(23)]
+        self.simple_grid = []
         for i in range(len(self.grid)):
             for j in range(len(self.grid[i])):
                 if (j,i) in locked_positions:
                     c = locked_positions[(j,i)]
                     self.grid[i][j] = c
-                    self.simple_grid[i][j] = 1
+                    self.simple_grid.append(1)
+                else:
+                    self.simple_grid.append(0)
+    def close(self):
+        if self.win is not None:
+            pygame.display.quit()
+            pygame.quit()
 if __name__ == '__main__':
     game = Base()
     game.start_game()
