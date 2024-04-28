@@ -696,8 +696,11 @@ class Base():
         hold_piece_ind = -1
         # TODO handle the reward function
         # Will depend on the environment i.e 40 lines vs 2 min blitz
-        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind], 0, self.done,{}
+        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind], self.reward_function(), self.done,{}
     
+    def reward_function(self):
+        return 0
+
     def render(self):
         self.draw_window(self.win,self.grid,self.score,0)
         self.draw_next_shape(self.next_piece, self.win)
