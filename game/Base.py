@@ -421,7 +421,7 @@ def main(win):
                     current_piece.y += 1
                     if not valid_space(current_piece, grid):
                         current_piece.y -= 1
-                if event.key == pygame.K_c and not swap:
+                elif event.key == pygame.K_c and not swap:
                     # handle piece change if necessary
                     # handle the first swap
                     temp_piece = hold_piece
@@ -433,6 +433,12 @@ def main(win):
                         next_piece.append(get_shape())
                     hold_piece.reset_position() #reset to top
                     swap = True
+                if event.key == pygame.K_SPACE:
+                    # handle immediate drop
+                    current_piece.y += 1
+                    while valid_space(current_piece,grid):
+                        current_piece.y += 1
+                    current_piece.y -= 1
         shape_pos = convert_shape_format(current_piece)
 
         # add color of piece to the grid for drawing
