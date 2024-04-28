@@ -18,6 +18,9 @@ block_size = 30
 top_left_x = (s_width - play_width) // 2
 top_left_y = s_height - play_height
 
+# Additional Game settings
+look_ahead = 4 # denotes the number of pieces you can look ahead for
+
 
 # SHAPE FORMATS
 
@@ -178,7 +181,6 @@ def valid_space(shape, grid):
     accepted_positions = [[(j, i) for j in range(10) if grid[i][j] == (0,0,0)] for i in range(20)]
     accepted_positions = [j for sub in accepted_positions for j in sub]
     formatted = convert_shape_format(shape)
-    print(accepted_positions)
     for pos in formatted:
         if pos not in accepted_positions:
             if pos[1] > -1:
@@ -235,21 +237,21 @@ def clear_rows(grid, locked):
                 locked[newKey] = locked.pop(key)
     return inc
 
-def draw_next_shape(shape, surface):
+def draw_next_shape(shapes, surface):
     font = pygame.font.SysFont('comicsans', 30)
-    label = font.render('Next Shape', 1, (255,255,255))
+    label = font.render('Next Shapes', 1, (255,255,255))
+    for ind,shape in enumerate(shapes):
+        sx = top_left_x + play_width + 50
+        sy = top_left_y + play_height/2 - 100 + ind*100
+        format = shape.shape[0]
 
-    sx = top_left_x + play_width + 50
-    sy = top_left_y + play_height/2 - 100
-    format = shape.shape[shape.rotation % len(shape.shape)]
+        for i, line in enumerate(format):
+            row = list(line)
+            for j, column in enumerate(row):
+                if column == '0':
+                    pygame.draw.rect(surface, shape.color, (sx + j*30, sy + i*30, 30, 30), 0)
 
-    for i, line in enumerate(format):
-        row = list(line)
-        for j, column in enumerate(row):
-            if column == '0':
-                pygame.draw.rect(surface, shape.color, (sx + j*30, sy + i*30, 30, 30), 0)
-
-    surface.blit(label, (sx + 10, sy- 30))
+    surface.blit(label, (top_left_x + play_width + 25, top_left_y + play_height/2 - 100 - 50))
 
 def draw_window(surface, grid, score=0, last_score = 0):
     surface.fill((0, 0, 0))
@@ -264,8 +266,8 @@ def draw_window(surface, grid, score=0, last_score = 0):
     font = pygame.font.SysFont('comicsans', 30)
     label = font.render('Score: ' + str(score), 1, (255,255,255))
 
-    sx = top_left_x + play_width + 50
-    sy = top_left_y + play_height/2 - 100
+    sx = top_left_x + play_width + 25
+    sy = top_left_y + play_height/2 - 400
 
     surface.blit(label, (sx + 20, sy + 160))
     # last score
@@ -289,11 +291,10 @@ def main(win):
  
     locked_positions = {}  # (x,y):(255,0,0)
     grid = create_grid(locked_positions)
-    print(locked_positions)
     change_piece = False
     run = True
     current_piece = get_shape()
-    next_piece = get_shape()
+    next_piece = [get_shape() for _ in range(look_ahead)]
     clock = pygame.time.Clock()
     fall_time = 0
     level_time = 0
@@ -359,8 +360,8 @@ def main(win):
             for pos in shape_pos:
                 p = (pos[0], pos[1])
                 locked_positions[p] = current_piece.color
-            current_piece = next_piece
-            next_piece = get_shape()
+            current_piece = next_piece.pop(0)
+            next_piece.append(get_shape())
             change_piece = False
             score += clear_rows(grid,locked_positions)*10
         draw_window(win,grid,score,0)
