@@ -12,7 +12,7 @@ s_height = 700
 
 # play area global var
 play_width = 300
-play_height = 600 
+play_height = 600 + 30*3 #allocate a 3 row buffer 
 block_size = 30
 
 top_left_x = (s_width - play_width) // 2
@@ -164,7 +164,7 @@ class Piece(object):
 
 # determines how to draw the grid
 def create_grid(locked_positions={}):
-     grid = [[(0,0,0) for _ in range(10)] for _ in range(20)]
+     grid = [[(0,0,0) for _ in range(10)] for _ in range(23)]
 
      for i in range(len(grid)):
         for j in range(len(grid[i])):
@@ -188,7 +188,7 @@ def convert_shape_format(shape):
 def valid_space(shape, grid):
 
     # check for empty spaces
-    accepted_positions = [[(j, i) for j in range(10) if grid[i][j] == (0,0,0)] for i in range(20)]
+    accepted_positions = [[(j, i) for j in range(10) if grid[i][j] == (0,0,0)] for i in range(20+3)]
     accepted_positions = [j for sub in accepted_positions for j in sub]
     formatted = convert_shape_format(shape)
     for pos in formatted:
@@ -237,7 +237,8 @@ def wall_rotation_check(shape,grid):
 def check_lost(positions):
     for pos in positions:
         x, y = pos
-        if y < 1:
+        # account for buffer
+        if y < 3:
             return True
     return False
 
@@ -254,7 +255,7 @@ def draw_text_middle(surface, text, size, color):
 def draw_grid(surface, grid):
 # This function draws the grey grid lines that we see
     sx = top_left_x
-    sy = top_left_y
+    sy = top_left_y+90
     for i in range(len(grid)):
         pygame.draw.line(surface, (128,128,128), (sx, sy+ i*30), (sx + play_width, sy + i * 30))  # horizontal lines
         for j in range(len(grid[i])):
