@@ -1,7 +1,8 @@
-import env.BaseEnv
-import env.FortyEnv
+from env import *
+from game import *
 import gym
 
+# look at env/__init__.py for the gym names
 env = gym.make('FortyLine-Tetris-v0')
 
 env.reset()

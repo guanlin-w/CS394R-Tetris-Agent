@@ -10,3 +10,10 @@ gym.register(
     entry_point='env.FortyEnv:FortyEnv',
     kwargs={}
 )
+
+
+gym.register(
+    id='Blitz-Tetris-v0',
+    entry_point='env.BlitzEnv:BlitzEnv',
+    kwargs={}
+)

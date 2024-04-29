@@ -367,8 +367,10 @@ class Base():
         pygame.draw.rect(surface, (255, 0, 0), (self.top_left_x, self.top_left_y+90, self.play_width, self.play_height), 5)
 
         self.draw_grid(surface, grid)
+    
 
-    def main(self):
+    def initialize_game(self):
+        # moved all the initialization component of the entrypoint here
         self.locked_positions = {}  # (x,y):(255,0,0)
         self.grid = self.create_grid(self.locked_positions)
         self.change_piece = False
@@ -389,6 +391,9 @@ class Base():
         # can only slide for self.settle per piece 
         self.onGround = False
         self.moves_slid = 0 
+
+    def main(self):
+        
         while not self.done:
             self.level_time += self.clock.get_rawtime()
             if self.level_time/1000 > 5:
@@ -550,6 +555,7 @@ class Base():
                 if event.type == pygame.QUIT:
                     run = False
                 if event.type == pygame.KEYDOWN:
+                    self.initialize_game()
                     self.main()
 
         pygame.display.quit()
@@ -743,6 +749,6 @@ class Base():
             pygame.display.quit()
             pygame.quit()
             
-if __name__ == '__main__':
-    game = Base()
-    game.start_game()
+# if __name__ == '__main__':
+#     game = Base()
+#     game.start_game()
