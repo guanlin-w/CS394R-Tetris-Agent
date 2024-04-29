@@ -1,11 +1,11 @@
 import gym
 from gym import spaces
-from game import Base
+from game import FortyLines
 
-class BaseEnv(gym.Env):
+class FortyEnv(gym.Env):
     def __init__(self):
-        super(BaseEnv,self).__init__()
-        self.game = Base()
+        super(FortyEnv,self).__init__()
+        self.game = FortyLines()
 
         # 0 - Left
         # 1 - Right

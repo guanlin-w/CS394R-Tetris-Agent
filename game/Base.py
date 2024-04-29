@@ -37,7 +37,6 @@ class Base():
 
         # Additional Game settings
         self.look_ahead = 4 # denotes the number of pieces you can look ahead for
-
         # SHAPE FORMATS
 
         S = [[
@@ -370,11 +369,10 @@ class Base():
         self.draw_grid(surface, grid)
 
     def main(self):
-    
         self.locked_positions = {}  # (x,y):(255,0,0)
         self.grid = self.create_grid(self.locked_positions)
         self.change_piece = False
-        self.run = True
+        self.done = False
         self.current_piece = self.get_shape()
         self.next_piece = [self.get_shape() for _ in range(self.look_ahead)]
         self.hold_piece = None
@@ -382,6 +380,8 @@ class Base():
         self.fall_time = 0
         self.level_time = 0
         self.score = 0
+
+        self.lost = False
         # can only initiate swap if a piece has been placed
         self.swap = False
         
@@ -389,7 +389,7 @@ class Base():
         # can only slide for self.settle per piece 
         self.onGround = False
         self.moves_slid = 0 
-        while self.run:
+        while not self.done:
             self.level_time += self.clock.get_rawtime()
             if self.level_time/1000 > 5:
                 self.level_time = 0
@@ -409,12 +409,12 @@ class Base():
                     self.current_piece.y -= 1
                     # we have hit a bottom collision
                     self.onGround = True
-
                 else:
                     self.onGround = False
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.run = False
+                    self.done = True
                     pygame.display.quit()
                     quit()
     
@@ -517,21 +517,27 @@ class Base():
                 self.swap = False
                 self.moves_slid = 0 
 
+            self.evaluateBoard()
+
 
             self.draw_window(self.win,self.grid,self.score,0)
             self.draw_next_shape(self.next_piece,self.win)
             self.draw_hold_shape(self.hold_piece,self.win)
-            pygame.display.update()
-            self.evaluateBoard()
+            if self.lost:
+                self.draw_text_middle(self.win, "YOU LOST!", 80, (255,255,255))
+                pygame.display.update()
+                pygame.time.delay(1500)
+            else:
+                pygame.display.update()
+            
     
     def evaluateBoard(self):
         # evaluate the board to see if we have won or loss
         # in this case, this only checks if the player has lost
         if self.check_lost(self.locked_positions):
-                self.draw_text_middle(self.win, "YOU LOST!", 80, (255,255,255))
-                pygame.display.update()
-                pygame.time.delay(1500)
-                self.run = False
+                #pygame.display.update()
+                self.done = True
+                self.lost = True
 
 
     def main_menu(self):  # *
@@ -565,7 +571,7 @@ class Base():
         # populates both grid and simple_grid
         self.create_simple_grid(self.locked_positions)
         self.change_piece = False
-        self.run = True
+        self.done = False
         self.current_piece = self.get_shape()
         self.next_piece = [self.get_shape() for _ in range(self.look_ahead)]
         self.hold_piece = None
@@ -576,6 +582,7 @@ class Base():
         # can only initiate swap if a piece has been placed
         self.swap = False
         
+        self.lost = False
         # exclusive to the gym env
         self.current_piece_format = self.convert_shape_format(self.current_piece)
         self.onGround = False
@@ -695,9 +702,9 @@ class Base():
             self.swap = False
             self.moves_slid = 0 
             self.onGround = False
+        
+        self.evaluateBoard()
 
-        if self.check_lost(self.locked_positions):
-            self.done = True
 
         next_pieces_ind = [x.index for x in self.next_piece]
         hold_piece_ind = -1
@@ -712,7 +719,12 @@ class Base():
         self.draw_window(self.win,self.grid,self.score,0)
         self.draw_next_shape(self.next_piece, self.win)
         self.draw_hold_shape(self.hold_piece,self.win)
-        pygame.display.update()
+        if self.lost:
+            self.draw_text_middle(self.win, "YOU LOST!", 80, (255,255,255))
+            pygame.display.update()
+            pygame.time.delay(1500)
+        else:
+            pygame.display.update()
 
     # same logic as create grid but also populates the simple grid as well
     def create_simple_grid(self,locked_positions={}):
@@ -730,6 +742,7 @@ class Base():
         if self.win is not None:
             pygame.display.quit()
             pygame.quit()
+            
 if __name__ == '__main__':
     game = Base()
     game.start_game()

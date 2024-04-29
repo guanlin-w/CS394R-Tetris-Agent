@@ -1,9 +1,11 @@
-from Base import Base
+from game.Base import Base
 import pygame
 class FortyLines(Base):
     def __init__(self):
         super().__init__()
         self.lines_cleared = 0
+        self.prev_cleared = 0
+        self.won = False
 
 
     def clear_rows(self,grid, locked):
@@ -35,16 +37,12 @@ class FortyLines(Base):
         # evaluate the board to see if we have won or loss
         # in this case, check if we have lost or have reached 40 lines
         if self.check_lost(self.locked_positions):
-            self.draw_text_middle(self.win, "YOU LOST!", 80, (255,255,255))
-            pygame.display.update()
-            pygame.time.delay(1500)
-            self.run = False
+            self.done = True
+            self.lost  =True
 
         if self.lines_cleared >= 40:
-            self.draw_text_middle(self.win, "YOU WON!", 80, (255,255,255))
-            pygame.display.update()
-            pygame.time.delay(1500)
-            self.run = False
+            self.done = True
+            self.won = True
 
     def draw_window(self,surface, grid, score=0, last_score = 0):
         # same code as the base but replace the score with Lines cleared
@@ -79,6 +77,24 @@ class FortyLines(Base):
         pygame.draw.rect(surface, (255, 0, 0), (self.top_left_x, self.top_left_y+90, self.play_width, self.play_height), 5)
 
         self.draw_grid(surface, grid)
+
+
+    # Functions for the ENVS
+    def reward_function(self):
+       
+       #  Current reward function:
+       # -1 for every action
+       # +100 for each line cleared
+       # -4000 for game loss
+        
+        reward = -1 + 100*(self.lines_cleared  - self.prev_cleared)
+
+        if self.lost:
+            reward += -4000
+
+        self.prev_cleared = self.lines_cleared
+        return reward
+    
     
 if __name__ == '__main__':
     game = FortyLines()
