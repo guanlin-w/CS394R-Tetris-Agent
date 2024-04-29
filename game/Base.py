@@ -242,7 +242,7 @@ class Base():
 
     def get_shape(self):
         global shapes, shape_colors
-        return Piece(self.shapes[2],self)#Piece(random.choice(self.shapes),self)
+        return Piece(random.choice(self.shapes),self) #Piece(self.shapes[2],self)
 
     def draw_text_middle(self,surface, text, size, color):
         font = pygame.font.SysFont("comicsans", size, bold=True)
