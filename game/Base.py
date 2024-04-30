@@ -603,9 +603,10 @@ class Base():
         # the current piece (x,y) of the bounding box. The current shape index and the rotation index
         # the list of the next 4 pieces (in terms of index in the shapes list)
         # the hold piece index
+        # number to see if the player has already swapped (true = 1)
         next_pieces_ind = [x.index for x in self.next_piece]
         hold_piece_ind = -1
-        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind]
+        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,0]
 
 
     # manipulates the env using the action
@@ -714,9 +715,11 @@ class Base():
 
         next_pieces_ind = [x.index for x in self.next_piece]
         hold_piece_ind = -1
+        
+        swapped_piece = 1 if self.swap else 0
         # TODO handle the reward function
         # Will depend on the environment i.e 40 lines vs 2 min blitz
-        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind], self.reward_function(), self.done,{}
+        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,swapped_piece], self.reward_function(), self.done,{}
     
     def reward_function(self):
         return 0

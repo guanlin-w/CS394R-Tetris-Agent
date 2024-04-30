@@ -22,7 +22,7 @@ class BaseEnv(gym.Env):
         # the current piece (x,y) of the bounding box. The current shape index and the rotation index - 4
         # the list of the next 4 pieces (in terms of index in the shapes list) - 4
         # the hold piece index - 1
-        self.observation_space = spaces.Discrete(23*10 + 4 + 4 + 1)
+        self.observation_space = spaces.Discrete(23*10 + 4 + 4 + 1+1)
         self.game.setup()
 
     def step(self,action):
