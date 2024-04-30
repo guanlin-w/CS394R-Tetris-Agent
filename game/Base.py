@@ -657,8 +657,8 @@ class Base():
                         self.onGround = True
                     else:
                         self.moves_slid = self.settle 
-                else:
-                    self.score += 1
+                # else:
+                #     self.score += 1
             case 4:
                 if self.swap:
                     # handle piece change if necessary
@@ -684,7 +684,7 @@ class Base():
                     distance += 1
                 distance -= 1
                 self.current_piece.y -= 1
-                self.score += 2*distance
+                #self.score += 2*distance
                 self.change_piece = True
                 self.moves_slid = self.settle
             

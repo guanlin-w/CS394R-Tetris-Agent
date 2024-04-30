@@ -88,8 +88,8 @@ class Blitz(Base):
                             self.current_piece.y -= 1
                             # instantly set the piece down
                             self.moves_slid = self.settle 
-                        else:
-                            self.score += 1
+                        # else:
+                        #     self.score += 1
                     elif event.key == pygame.K_c and not self.swap:
                         # handle piece change if necessary
                         # handle the first swap
@@ -116,7 +116,7 @@ class Blitz(Base):
                             distance += 1
                         distance -= 1
                         self.current_piece.y -= 1
-                        self.score += 2*distance
+                        #self.score += 2*distance
                         self.change_piece = True
                         self.moves_slid = self.settle
 
