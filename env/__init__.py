@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 gym.register(
     id='Base-Tetris-v0',
     entry_point='env.BaseEnv:BaseEnv',

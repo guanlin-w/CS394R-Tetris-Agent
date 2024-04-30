@@ -11,6 +11,8 @@ class Blitz(Base):
         self.action_count = 0
         self.prev_score = 0
         self.won = False
+
+        self.max_height = 0
     
     def initialize_game(self):
         super().initialize_game()
@@ -70,9 +72,9 @@ class Blitz(Base):
                     elif event.key == pygame.K_UP:
                         # rotate shape
                         self.current_piece.rotation = self.current_piece.rotation + 1 % len(self.current_piece.shape)
-                        self.action_count += 1
+                        #self.action_count += 1
                         if not self.valid_space(self.current_piece, self.grid):
-                            self.action_count -= 1
+                            #self.action_count -= 1
                             displacement = self.wall_rotation_check(self.current_piece,self.grid)
                             if not displacement:
                                 self.current_piece.rotation = self.current_piece.rotation - 1 % len(self.current_piece.shape)
@@ -234,10 +236,32 @@ class Blitz(Base):
         reward = self.score - self.prev_score
 
         self.prev_score = self.score
+        if self.lost:
+            reward += -(self.action_limit-self.action_count)
 
+        # penalize stacking randomly also rewards line clearing
+        _, max_height = self.getHeights()
+        reward += -100*(max_height-self.max_height)
+        self.max_height = max_height
         return reward
     
-    
+
+    def getHeights(self):
+        min_height = 23 
+        max_height = 0
+        # self.grid = [[(0,0,0) for _ in range(10)] for _ in range(23)]
+        #self.simple_grid = []
+        for i in range(len(self.grid)):
+            has_one = False
+            for j in range(len(self.grid[i])):
+                if self.simple_grid[i*10+j] == 1: 
+                    has_one = True
+                    break
+            if has_one:
+                height = 23 - i
+                max_height = height if height > max_height else max_height
+                min_height = height if height < min_height else min_height
+        return min_height, max_height
 # if __name__ == '__main__':
 #     game = Blitz()
 #     game.start_game()

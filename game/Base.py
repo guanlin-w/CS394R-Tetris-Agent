@@ -1,6 +1,6 @@
 import pygame
 import random
-
+import numpy as np
 # sourced from https://www.techwithtim.net/tutorials/game-development-with-python/tetris-pygame/tutorial-1
 
 class Piece(object):
@@ -163,7 +163,6 @@ class Base():
     # determines how to draw the grid
     def create_grid(self,locked_positions={}):
         grid = [[(0,0,0) for _ in range(10)] for _ in range(23)]
-
         for i in range(len(grid)):
             for j in range(len(grid[i])):
                 if (j,i) in locked_positions:
@@ -575,6 +574,7 @@ class Base():
         self.grid = []
         self.simple_grid = []
         # populates both grid and simple_grid
+        self.create_grid(self.locked_positions)
         self.create_simple_grid(self.locked_positions)
         self.change_piece = False
         self.done = False
@@ -602,11 +602,17 @@ class Base():
         # grid
         # the current piece (x,y) of the bounding box. The current shape index and the rotation index
         # the list of the next 4 pieces (in terms of index in the shapes list)
-        # the hold piece index
+        # the hold piece index - index of 7 for no pieces
         # number to see if the player has already swapped (true = 1)
         next_pieces_ind = [x.index for x in self.next_piece]
-        hold_piece_ind = -1
-        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,0]
+        hold_piece_ind = 7
+
+
+        #  3, 0, 5, 0, 1, 1, 1, 2, 7, 0
+        #  10 23  7  4 7  7  7  7  8  2
+        #  3, 0, 0, 0, 4, 6, 3, 0, 7, 0]
+
+        return np.array(self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,0])
 
 
     # manipulates the env using the action
@@ -714,12 +720,13 @@ class Base():
 
 
         next_pieces_ind = [x.index for x in self.next_piece]
-        hold_piece_ind = -1
+        hold_piece_ind = 7 if self.hold_piece is None else self.hold_piece.index
         
         swapped_piece = 1 if self.swap else 0
         # TODO handle the reward function
         # Will depend on the environment i.e 40 lines vs 2 min blitz
-        return self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,swapped_piece], self.reward_function(), self.done,{}
+        self.create_simple_grid(self.locked_positions)
+        return np.array(self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,swapped_piece]), self.reward_function(), self.done,False,{}
     
     def reward_function(self):
         return 0
@@ -737,13 +744,13 @@ class Base():
 
     # same logic as create grid but also populates the simple grid as well
     def create_simple_grid(self,locked_positions={}):
-        self.grid = [[(0,0,0) for _ in range(10)] for _ in range(23)]
+        #self.grid = [[(0,0,0) for _ in range(10)] for _ in range(23)]
         self.simple_grid = []
-        for i in range(len(self.grid)):
-            for j in range(len(self.grid[i])):
+        for i in range(23):
+            for j in range(10):
                 if (j,i) in locked_positions:
-                    c = locked_positions[(j,i)]
-                    self.grid[i][j] = c
+                    #c = locked_positions[(j,i)]
+                    #self.grid[i][j] = c
                     self.simple_grid.append(1)
                 else:
                     self.simple_grid.append(0)
