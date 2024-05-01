@@ -3,6 +3,352 @@ import random
 import numpy as np
 # sourced from https://www.techwithtim.net/tutorials/game-development-with-python/tetris-pygame/tutorial-1
 
+S = [[
+    '.00',
+    '00.',
+    '...'],
+    [
+    '.0.',
+    '.00',
+    '..0'],
+    [
+    '...',
+    '.00',
+    '00.'],
+    [
+    '0..',
+    '00.',
+    '.0.']]
+
+Z = [[
+    '00.',
+    '.00',
+    '...'],
+    [
+    '..0',
+    '.00',
+    '.0.'],
+    [
+    '...',
+    '00.',
+    '.00'],
+    [
+    '.0.',
+    '00.',
+    '0..']]
+
+I = [
+        ['....',
+        '0000',
+        '....',
+        '....'],
+
+        ['..0.',
+        '..0.',
+        '..0.',
+        '..0.'],
+
+        ['....',
+        '....',
+        '0000',
+        '....'],
+
+        ['.0..',
+        '.0..',
+        '.0..',
+        '.0..']
+
+    ]
+
+O = [[
+    '00',
+    '00'
+    ]]
+
+J = [[
+    '0..',
+    '000',
+    '...'],
+    [
+    '.00',
+    '.0.',
+    '.0.'],
+    [
+    '...',
+    '000',
+    '..0'],
+    [
+    '.0.',
+    '.0.',
+    '00.']]
+
+L = [[
+    '..0',
+    '000',
+    '...'],
+    [
+    '.0.',
+    '.0.',
+    '.00'],
+    [
+    '...',
+    '000',
+    '0..'],
+    [
+    '00.',
+    '.0.',
+    '.0.']]
+
+T = [[
+    '.0.',
+    '000',
+    '...'],
+    [
+    '.0.',
+    '.00',
+    '.0.'],
+    [
+    '...',
+    '000',
+    '.0.'],
+    [
+    '.0.',
+    '00.',
+    '.0.']]
+
+shapes = [S, Z, I, O, J, L, T]
+
+class StateActionFeatures():
+    # def in_bounds(i, j, grid):
+            #     return 
+    # @staticmethod
+    # def bfs(i, j, grid, visited, g2h):
+    #     q = list()
+    #     q.append((i, j))
+        
+    #     found_empties = list()
+    #     touched_top = False
+    #     while q:
+    #         e = q.pop(0)
+
+    #         i, j = e
+
+    #         if not (i >= 0 and i < grid.shape[0] and j >= 0 and j < grid.shape[1]):
+    #             continue
+    #         if i == 0:
+    #             touched_top = True
+    #         if grid[i][j] == 1:
+    #             continue
+    #         if visited[i][j] == 1:
+    #             continue
+
+    #         found_empties.append((i, j))
+    #         visited[i][j] = 1
+    #         q.append((i-1, j))
+    #         q.append((i+1, j))
+    #         q.append((i, j-1))
+    #         q.append((i, j+1))
+
+    #     if not touched_top:
+    #         g2h[len(g2h)] = found_empties
+
+    # @staticmethod
+    # def get_holes(grid):
+    #     group_to_holes = dict()
+
+    #     visited = np.zeros_like(grid)
+
+    #     for i in range(len(grid)):
+    #         for j in range(len(grid[0])):
+    #             StateActionFeatures.bfs(i, j, grid, visited, group_to_holes)
+
+    #     return group_to_holes
+
+    @staticmethod
+    def get_holes(grid):
+        holes = list()
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                if grid[i][j] == 0:
+                    isHole = False
+                    for i1 in range(i, -1, -1):
+                        if grid[i1, j] == 1:
+                            isHole = True
+                    if isHole:
+                        holes.append((i, j))
+        return holes
+
+    @staticmethod
+    def num_holes(grid):
+        
+        # g2h = StateActionFeatures.get_holes(grid)
+        # n_holes = 0
+        # for k in g2h:
+        #     n_holes += len(g2h[k])
+
+        holes = StateActionFeatures.get_holes(grid)
+        return len(holes)
+
+    @staticmethod
+    def rows_with_holes(grid):
+        # g2h = StateActionFeatures.get_holes(grid)
+        # rows = set()
+        # for k in g2h:
+        #     v = g2h[k]
+        #     for (i, j) in v:
+        #         rows.add(i)
+
+        holes = StateActionFeatures.get_holes(grid)
+        rows = set()
+        for (i, j) in holes:
+            rows.add(i)
+        return len(rows)
+
+    def column_transitions(grid):
+        n_cts = 0
+        for j in range(len(grid[0])):
+            if 0 != grid[0][j]:
+                n_cts += 1
+            for i in range(0, len(grid)-1):
+                if grid[i][j] != grid[i+1][j]:
+                    n_cts += 1
+            if grid[-1][j] != 1:
+                n_cts += 1
+        return n_cts
+    
+    def row_transitions(grid):
+        n_rts = 0
+        for i in range(len(grid)):
+            if 1 != grid[i][0]:
+                n_rts += 1
+            for j in range(0, len(grid[0])-1):
+                if grid[i][j] != grid[i][j+1]:
+                    n_rts += 1
+            if grid[i][-1] != 1:
+                n_rts += 1
+        return n_rts
+
+    def landing_height(grid, vector):
+        j_box = vector[0]
+        i_box = vector[1]
+        
+        shape = shapes[vector[2]][vector[3]]
+
+        height = 0
+        for k in range(len(shape)):
+            if '0' in shape[k]:
+                height += 1
+        
+        dists = np.zeros(len(shape[0]))
+        i_g_mins = np.zeros(len(shape[0]))
+        for j_rel in range(len(shape[0])):
+            j = j_box + j_rel
+
+            # for i_rel in len(shape):
+            #     i = i_box + i_rel
+            #     for i1 in range(i, 23):
+            #         if grid[i][j] == 1:
+            #             lh_bot = 23 - i
+            #             break
+            i_p_max = -np.inf
+            for i_rel in range(len(shape)):
+                i = i_box + i_rel
+                if shape[i_rel][j_rel] == '0':
+                    i_p_max = i
+            
+            i_g_min = 23
+            if i_p_max != -np.inf:
+                for i_g in range(len(grid)-1, i_p_max, -1):
+                    if grid[i_g][j] == 1:
+                        i_g_min = i_g
+            
+            dists[j_rel] = i_g_min - i_p_max
+            i_g_mins[j_rel] = i_g_min
+
+        j_rel_min = np.argmin(dists)
+        lh = (23 - i_g_mins[j_rel_min] + 1) + height/2 - 0.5
+
+        return lh
+
+    def cumulative_wells(grid):
+        grid_pad = np.ones((grid.shape[0], grid.shape[1]+2))
+        grid_pad[:, 1:-1] = grid
+
+        n_cwells = 0
+        for i in range(len(grid_pad)):
+            for j in range(1, len(grid_pad[0])-1):
+                i_curr = i
+                while i_curr >= 0 and grid_pad[i_curr][j] == 0 and grid_pad[i_curr][j-1] == 1 and grid_pad[i_curr][j+1] == 1:
+                    i_curr -= 1
+                    n_cwells += 1
+
+        return n_cwells
+    
+    def eroded_piece_cells(grid):
+        return 0
+    
+    def hole_depth(grid):
+        holes = StateActionFeatures.get_holes(grid)
+
+        j2h = dict()
+        for i, j in holes:
+            if j not in j2h:
+                j2h[j] = list()
+            j2h[j].append(i)
+        
+        depth = 0
+        for j in j2h:
+            i_max = max(j2h[j])
+            for i in range(i_max-1, -1, -1):
+                if grid[i][j] == 1:
+                    depth += 1
+        return depth
+        
+        
+
+class StateActionFeatureVector():
+    def __init__(self):
+        pass
+
+    def feature_vector_len(self):
+        pass
+    
+    def __call__(self, s, done, a):
+        # s
+        #     self.simple_grid 
+        #     self.current_piece.x
+        #     self.current_piece.y
+        #     self.current_piece.index
+        #     self.current_piece.rotation
+        #     next_pieces_ind
+        #     hold_piece_ind
+        #     swapped_piece
+        # a (0-5)
+        print('HERE')
+        # print(len(s))
+        # old grid
+        simple_grid = s[:230]
+        arr_grid = simple_grid.reshape((23,10))
+
+        vector = s[230:]
+
+
+        print('vector')
+        print(vector)
+
+        
+        n_rows_with_holes = StateActionFeatures.rows_with_holes(arr_grid)
+        n_cts = StateActionFeatures.column_transitions(arr_grid)
+        n_holes = StateActionFeatures.num_holes(arr_grid)
+        lh = StateActionFeatures.landing_height(arr_grid, vector)
+        n_cwells = StateActionFeatures.cumulative_wells(arr_grid)
+        n_rts = StateActionFeatures.row_transitions(arr_grid)
+        n_epcs = StateActionFeatures.eroded_piece_cells(arr_grid)
+        hd = StateActionFeatures.hole_depth(arr_grid)
+
+        return np.array([n_rows_with_holes, n_cts, n_holes, lh, n_cwells, n_rts, n_epcs, hd])
+
+
 class Piece(object):
     rows = 20
     columns = 10
@@ -438,11 +784,11 @@ class Base():
                             self.moves_slid += 1
                     elif event.key == pygame.K_UP:
                         # rotate shape
-                        self.current_piece.rotation = self.current_piece.rotation + 1 % len(self.current_piece.shape)
+                        self.current_piece.rotation = (self.current_piece.rotation + 1) % len(self.current_piece.shape)
                         if not self.valid_space(self.current_piece, self.grid):
                             displacement = self.wall_rotation_check(self.current_piece,self.grid)
                             if not displacement:
-                                self.current_piece.rotation = self.current_piece.rotation - 1 % len(self.current_piece.shape)
+                                self.current_piece.rotation = (self.current_piece.rotation - 1) % len(self.current_piece.shape)
     
                     elif event.key == pygame.K_DOWN:
                         # move shape down
@@ -611,8 +957,9 @@ class Base():
         #  3, 0, 5, 0, 1, 1, 1, 2, 7, 0
         #  10 23  7  4 7  7  7  7  8  2
         #  3, 0, 0, 0, 4, 6, 3, 0, 7, 0]
-
-        return np.array(self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,0])
+        s = np.array(self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,0])
+        new_s = {'vector': s[230:], 'grid': s[:230].reshape((23,10))}
+        return s
 
 
     # manipulates the env using the action
@@ -641,11 +988,11 @@ class Base():
                     self.moves_slid += 1
             case 2:
                 # rotate shape
-                self.current_piece.rotation = self.current_piece.rotation + 1 % len(self.current_piece.shape)
+                self.current_piece.rotation = (self.current_piece.rotation + 1) % len(self.current_piece.shape)
                 if not self.valid_space(self.current_piece, self.grid):
                     displacement = self.wall_rotation_check(self.current_piece,self.grid)
                     if not displacement:
-                        self.current_piece.rotation = self.current_piece.rotation - 1 % len(self.current_piece.shape)
+                        self.current_piece.rotation = (self.current_piece.rotation - 1) % len(self.current_piece.shape)
 
             case 3:
                 # move shape down
@@ -726,7 +1073,16 @@ class Base():
         # TODO handle the reward function
         # Will depend on the environment i.e 40 lines vs 2 min blitz
         self.create_simple_grid(self.locked_positions)
-        return np.array(self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,swapped_piece]), self.reward_function(), self.done,False,{}
+
+        
+        s, r, isdone, b, d = np.array(self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,swapped_piece]), self.reward_function(), self.done,False,{}
+        
+        # X = StateActionFeatureVector()
+        # x = X(s, isdone, action)
+        # print(x)
+        
+        new_s = {'vector': s[230:], 'grid': s[:230].reshape((23,10))}
+        return s, r, isdone, b, d
     
     def reward_function(self):
         return 0

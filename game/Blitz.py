@@ -1,5 +1,6 @@
 from game import Base
 import pygame
+import numpy as np
 # 2 minute blitz
 class Blitz(Base):
     def __init__(self):
@@ -10,6 +11,7 @@ class Blitz(Base):
         self.action_limit = 2000
         self.action_count = 0
         self.prev_score = 0
+        self.prev_num_holes = 0
         self.won = False
 
         self.max_height = 0
@@ -236,8 +238,12 @@ class Blitz(Base):
         reward = self.score - self.prev_score
 
         self.prev_score = self.score
-        if self.lost:
-            reward += -(self.action_limit-self.action_count)
+
+        num_holes = self.num_holes()
+        reward += -10 * (num_holes - self.prev_num_holes)
+        self.prev_num_holes = num_holes
+        # if self.lost:
+            # reward += -(self.action_limit-self.action_count)
 
         # penalize stacking randomly also rewards line clearing
         _, max_height = self.getHeights()
@@ -245,6 +251,30 @@ class Blitz(Base):
         self.max_height = max_height
         return reward
     
+    def get_holes(self):
+        arr = np.array(self.simple_grid)
+        grid = arr.reshape((23,10))
+
+        holes = list()
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                if grid[i][j] == 0:
+                    isHole = False
+                    for i1 in range(i, -1, -1):
+                        if grid[i1, j] == 1:
+                            isHole = True
+                    if isHole:
+                        holes.append((i, j))
+        return holes
+
+    def num_holes(self):
+        
+        # g2h = StateActionFeatures.get_holes(grid)
+        # n_holes = 0
+        # for k in g2h:
+        #     n_holes += len(g2h[k])
+        holes = self.get_holes()
+        return len(holes)
 
     def getHeights(self):
         min_height = 23 
