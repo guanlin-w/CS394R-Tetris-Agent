@@ -60,16 +60,16 @@ class TetrisEnv(gym.Env):
         rows_count = len(rows)
         done = self.game.board.is_game_over()
 
-        reward = 1
+        reward = -1
 
         if rows_count == 1:
             reward += 40
         elif rows_count == 2:
-            reward += 100
+            reward += 80
         elif rows_count == 3:
-            reward += 300
+            reward += 120
         elif rows_count == 4:
-            reward += 1200
+            reward += 160
 
         if done:
             reward -= 5
