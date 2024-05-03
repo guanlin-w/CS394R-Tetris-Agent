@@ -33,10 +33,13 @@ class View:
         self.board_x, self.board_y, self.board_width, self.board_height = self.board_rect
         self.hold_rect = (290, 25, 144, 72)
         self.next_rect = (290, 122, 144, 72)
+        self.ms_time = 0
+        self.seconds = 0
 
     def draw(self, game):
         """"Draws everything."""
         self.clock.tick(FRAMES_PER_SECOND)
+
         self.win.fill((155, 155, 155))
         self._draw_board(game.board)
         self._draw_piece_next(game.board.piece_next)
@@ -44,6 +47,9 @@ class View:
         self._draw_score(game.level, game.score, game.lines)
         if game.board.is_game_over():
             self._draw_game_over()
+        else:
+            self.ms_time += self.clock.get_time()
+            self.seconds = self.ms_time/1000
         pygame.display.update()
 
     def _draw_board(self, board):
@@ -131,6 +137,8 @@ class View:
         self.win.blit(score_surface, (self.board_x + self.board_width + 25, self.board_y + 250))
         score_surface = self.font.render('Lines  ' + str(lines), False, (0, 0, 0))
         self.win.blit(score_surface, (self.board_x + self.board_width + 25, self.board_y + 300))
+        score_surface = self.font.render('Time  ' + str(self.seconds), False, (0, 0, 0))
+        self.win.blit(score_surface, (self.board_x + self.board_width + 25, self.board_y + 350))
         pass
 
     def _draw_game_over(self):
