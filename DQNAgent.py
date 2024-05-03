@@ -11,7 +11,7 @@ env.reset()
 
 # check_env(env)
 
-models_dir = "./models/DQN"
+models_dir = "./models/DQN_heur_mlp_custom"
 log_dir = './logs'
 
 
@@ -108,12 +108,50 @@ class CustomDQNPolicy(DQNPolicy):
         self.q_net = CustomNetwork(self.features_extractor, action_space.n)
         self.q_net_target = deepcopy(self.q_net)
 
+
+
+
+# import torch
+# import torch.nn as nn
+# from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+
+class CustomMLP(nn.Module):
+    def __init__(self, observation_space, features_dim):
+        super(CustomMLP, self).__init__()
+
+        # Assuming observation_space is a Box space with shape (n_features,)
+        n_input_features = observation_space.shape[0]
+
+        # Define a simple MLP architecture
+        self.net = nn.Sequential(
+            nn.Linear(n_input_features, 64),  # First hidden layer
+            nn.ReLU(),
+            nn.Linear(64, 64),               # Second hidden layer
+            nn.ReLU(),
+            nn.Linear(64, features_dim)      # Output layer
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+class CustomDQNPolicy2(DQNPolicy):
+    def __init__(self, observation_space, action_space, lr_schedule, **kwargs):
+        super(CustomDQNPolicy2, self).__init__(observation_space, action_space, lr_schedule, **kwargs)
+
+        # Replace the features extractor with your custom MLP
+        self.features_extractor = CustomMLP(observation_space, features_dim=32)
+        self.net_arch = []  # Not using any additional layers in the policy head
+
+        # Redefine the Q-network to utilize the custom features extractor
+        self.q_net = self.make_q_net()
+        self.q_net_target = self.make_q_net()
+
 # You would use the CustomDQNPolicy with your DQN model as shown previously
-model = DQN(policy=CustomDQNPolicy, env=env, verbose=1,tensorboard_log=log_dir)
+model = DQN(policy=CustomDQNPolicy2, env=env, verbose=1,tensorboard_log=log_dir, exploration_fraction=0.5, exploration_final_eps=0.1)
 
 # saves every TIMESTEPS steps
 TIMESTEPS = 10000
-for i in range(1,30):
+for i in range(1,300):
     model.learn(total_timesteps=TIMESTEPS,reset_num_timesteps=False, tb_log_name="DQN")
     model.save(f'{models_dir}/{TIMESTEPS*i}')
     print(f'Timestep: {i*TIMESTEPS}')

@@ -12,6 +12,7 @@ class Blitz(Base):
         self.action_count = 0
         self.prev_score = 0
         self.prev_num_holes = 0
+        self.prev_bumpiness = 0
         self.won = False
 
         self.max_height = 0
@@ -19,6 +20,14 @@ class Blitz(Base):
     def initialize_game(self):
         super().initialize_game()
         self.action_count = 0
+        self.action_limit = 2000
+        self.action_count = 0
+        self.prev_score = 0
+        self.prev_num_holes = 0
+        self.prev_bumpiness = 0
+        self.won = False
+
+        self.max_height = 0
     # same main logic except it tracks the number of actions taken
     # actions include any of the key presses (and gravity for the interactive mode)
     def main(self):
@@ -239,17 +248,43 @@ class Blitz(Base):
 
         self.prev_score = self.score
 
-        num_holes = self.num_holes()
-        reward += -10 * (num_holes - self.prev_num_holes)
-        self.prev_num_holes = num_holes
+        # num_holes = self.num_holes()
+        # reward += -10 * (num_holes - self.prev_num_holes)
+        # self.prev_num_holes = num_holes
+
         # if self.lost:
             # reward += -(self.action_limit-self.action_count)
 
         # penalize stacking randomly also rewards line clearing
-        _, max_height = self.getHeights()
-        reward += -100*(max_height-self.max_height)
-        self.max_height = max_height
+        # _, max_height = self.getHeights()
+        # reward += -100*(max_height-self.max_height)
+        # self.max_height = max_height
+
+        bumpiness = self.get_bumpiness()
+        reward += -100*(bumpiness - self.prev_bumpiness)
+        self.prev_bumpiness = bumpiness
+
         return reward
+    
+    def get_bumpiness(self):
+        arr = np.array(self.simple_grid)
+        grid = arr.reshape((23,10))
+
+        heights = list()
+        for j in range(len(grid[0])):
+            height = 23
+            for i in range(len(grid)):
+                if grid[i][j] == 1:
+                    height = i
+                    break
+            heights.append(height)
+
+        bumpiness = 0
+        for i in range(len(heights)-1):
+            bumpiness += abs(heights[i+1] - heights[i])
+        return bumpiness
+
+
     
     def get_holes(self):
         arr = np.array(self.simple_grid)

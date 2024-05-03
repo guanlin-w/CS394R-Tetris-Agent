@@ -308,10 +308,12 @@ class StateActionFeatures():
 
 class StateActionFeatureVector():
     def __init__(self):
-        pass
+        self.feature_dims = 8 + 4
+        self.num_actions = 6
+
 
     def feature_vector_len(self):
-        pass
+        return self.feature_dims * self.num_actions
     
     def __call__(self, s, done, a):
         # s
@@ -324,17 +326,17 @@ class StateActionFeatureVector():
         #     hold_piece_ind
         #     swapped_piece
         # a (0-5)
-        print('HERE')
+        # print('HERE')
         # print(len(s))
         # old grid
+        # print(type(s))
+        # print(len(s))
         simple_grid = s[:230]
         arr_grid = simple_grid.reshape((23,10))
 
         vector = s[230:]
-
-
-        print('vector')
-        print(vector)
+        # print('vector')
+        # print(vector)
 
         
         n_rows_with_holes = StateActionFeatures.rows_with_holes(arr_grid)
@@ -346,7 +348,11 @@ class StateActionFeatureVector():
         n_epcs = StateActionFeatures.eroded_piece_cells(arr_grid)
         hd = StateActionFeatures.hole_depth(arr_grid)
 
-        return np.array([n_rows_with_holes, n_cts, n_holes, lh, n_cwells, n_rts, n_epcs, hd])
+        state_vec = np.array([n_rows_with_holes, n_cts, n_holes, lh, n_cwells, n_rts, n_epcs, hd, vector[0], vector[1], vector[2], vector[3]])
+        sa_vec = np.zeros(len(state_vec) * self.num_actions)
+        sa_vec[a * len(state_vec) : (a+1) * len(state_vec)] = state_vec
+
+        return sa_vec
 
 
 class Piece(object):
@@ -958,8 +964,11 @@ class Base():
         #  10 23  7  4 7  7  7  7  8  2
         #  3, 0, 0, 0, 4, 6, 3, 0, 7, 0]
         s = np.array(self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,0])
+        
+        X = StateActionFeatureVector()
+        x = X(s, False, 5)
         new_s = {'vector': s[230:], 'grid': s[:230].reshape((23,10))}
-        return s
+        return x
 
 
     # manipulates the env using the action
@@ -1077,12 +1086,12 @@ class Base():
         
         s, r, isdone, b, d = np.array(self.simple_grid + [self.current_piece.x,self.current_piece.y,self.current_piece.index, self.current_piece.rotation] + next_pieces_ind + [hold_piece_ind,swapped_piece]), self.reward_function(), self.done,False,{}
         
-        # X = StateActionFeatureVector()
-        # x = X(s, isdone, action)
+        X = StateActionFeatureVector()
+        x = X(s, isdone, action)
         # print(x)
         
         new_s = {'vector': s[230:], 'grid': s[:230].reshape((23,10))}
-        return s, r, isdone, b, d
+        return x, r, isdone, b, d
     
     def reward_function(self):
         return 0

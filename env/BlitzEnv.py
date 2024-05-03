@@ -24,7 +24,9 @@ class BlitzEnv(gym.Env):
         # the hold piece index - 1
 
 
-        self.observation_space = spaces.Box(low=-1,high=23, shape=(240,),dtype=np.int64)
+        # self.observation_space = spaces.Box(low=-1,high=23, shape=(240,),dtype=np.int64)
+        self.observation_space = spaces.Box(low=-100000,high=100000, shape=(72,),dtype=np.float64)
+
         # self.observation_space = spaces.Dict({
         #     'grid': spaces.Box(low=0, high=1, shape=(23, 10), dtype=np.uint8),  # Binary grid
         #     'vector': spaces.Box(low=-1, high=23, shape=(10,), dtype=np.float32)  # Additional vector features
