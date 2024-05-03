@@ -13,11 +13,11 @@ def main():
     running = True
     total_games = 0
     total_steps = 0
-    while running:
+    for ij in range(240):
         steps, rewards, scores = network.train(env, episodes=25)
         total_games += len(scores)
         total_steps += steps
-        network.save()
+        network.save(ij)
         print("==================")
         print("* Total Games: ", total_games)
         print("* Total Steps: ", total_steps)
