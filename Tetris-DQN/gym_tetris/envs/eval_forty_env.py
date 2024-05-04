@@ -79,7 +79,7 @@ class EvalFortyEnv(gym.Env):
 
         self.line_count += rows_count
         self.frame_count += 1
-        if self.line_count == 40:
+        if self.line_count >= 40:
             done = True
         seconds = self.view.seconds if self.view else 0
         return np.array(self.game.board.get_possible_states()), reward, done, {"score":self.game.score,"frames":self.frame_count,"lines":self.line_count}
