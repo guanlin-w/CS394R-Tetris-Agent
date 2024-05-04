@@ -6,7 +6,9 @@ import random
 import numpy as np
 import tensorflow as tf
 
-WEIGHT_PATH = os.path.join(os.path.dirname(__file__), 'weights', 'DQN', 'blitz-forty2')
+# SAVE_PATH = os.path.join(os.path.dirname(__file__), 'weights', 'DQN', 'blitzRH-blitz')
+# LOAD_PATH = 
+
 IMAGE_PATH = os.path.join(os.path.dirname(__file__), 'model.png')
 LOG_DIR = os.path.join(os.path.dirname(__file__), 'logs')
 
@@ -128,20 +130,23 @@ class QNetwork:
 
         return [steps, rewards, scores]
 
-    def load(self):
+    def load(self, load_path):
         """Load the weights."""
-        if Path(WEIGHT_PATH).is_file():
-            self.model.load_weights(WEIGHT_PATH)
+        # if Path(WEIGHT_PATH).is_file():
+        #     self.model.load_weights(WEIGHT_PATH)
         
-        self.model.load_weights(os.path.join(os.path.dirname(__file__), '0.weights.h5'))
+        # self.model.load_weights(os.path.join(os.path.dirname(__file__), '0.weights.h5'))
+        # self.model.load_weights(os.path.join(os.path.dirname(__file__),'weights','DQN','blitzRH-blitz', '6'+'.weights.h5'))
+        self.model.load_weights(load_path)
 
 
-    def save(self, ij):
+    def save(self, save_path):
         """Save the weights."""
-        if not os.path.exists(os.path.dirname(WEIGHT_PATH)):
-            os.makedirs(os.path.dirname(WEIGHT_PATH))
+        # if not os.path.exists(os.path.dirname(WEIGHT_PATH)):
+        #     os.makedirs(os.path.dirname(WEIGHT_PATH))
 
-        self.model.save_weights(os.path.join(WEIGHT_PATH, str(ij)+'.weights.h5'))
+        # self.model.save_weights(os.path.join(WEIGHT_PATH, str(ij)+'.weights.h5'))
+        self.model.save_weights(save_path)
 
 
     def learn(self, batch_size=512, epochs=1):

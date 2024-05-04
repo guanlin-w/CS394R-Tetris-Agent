@@ -14,14 +14,15 @@ WIN_WIDTH = 480
 WIN_HEIGHT = 526
 
 
-class TetrisEnv(gym.Env):
+class BlitzEnv(gym.Env):
     metadata = {
         'render.modes': ['human']
     }
 
-    def __init__(self, action_mode=0):
+    def __init__(self, reward_hack, action_mode=0):
         self.view = None
         self.game = None
+        self.reward_hack = reward_hack
         self.action_mode = action_mode
         if action_mode == 0:
             # Nothing, Left, Right, Rotate left, Rotate right, Drop, Full Drop, Hold
@@ -60,7 +61,7 @@ class TetrisEnv(gym.Env):
         rows_count = len(rows)
         done = self.game.board.is_game_over()
 
-        reward = 1
+        reward = 1 if self.reward_hack else 0
 
         if rows_count == 1:
             reward += 40

@@ -14,14 +14,15 @@ WIN_WIDTH = 480
 WIN_HEIGHT = 526
 
 
-class TetrisEnv(gym.Env):
+class FortyEnv(gym.Env):
     metadata = {
         'render.modes': ['human']
     }
 
-    def __init__(self, action_mode=0):
+    def __init__(self, reward_hack, action_mode=0):
         self.view = None
         self.game = None
+        self.reward_hack = reward_hack
         self.action_mode = action_mode
         if action_mode == 0:
             # Nothing, Left, Right, Rotate left, Rotate right, Drop, Full Drop, Hold
@@ -60,19 +61,19 @@ class TetrisEnv(gym.Env):
         rows_count = len(rows)
         done = self.game.board.is_game_over()
 
-        reward = 1
+        reward = 1 if self.reward_hack else -1
 
         if rows_count == 1:
             reward += 40
         elif rows_count == 2:
-            reward += 100
+            reward += 80
         elif rows_count == 3:
-            reward += 300
+            reward += 120
         elif rows_count == 4:
-            reward += 1200
+            reward += 160
 
         if done:
-            reward -= 5
+            reward -= 500
 
         return np.array(self.game.board.get_possible_states()), reward, done, {}
 

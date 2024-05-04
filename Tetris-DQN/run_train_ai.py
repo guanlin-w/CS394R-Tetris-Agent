@@ -4,11 +4,28 @@ import gym_tetris
 from statistics import mean, median
 from gym_tetris.ai.QNetwork import QNetwork
 
+import os
 
-def main():
-    env = gym.make("tetris-v1", action_mode=1)
+def main(args):
+    env_name = None
+    if args[1] == 'blitz':
+        env_name = 'blitz-v1'
+    if args[1] == 'forty':
+        env_name = 'forty-v1'
+    
+    reward_hack = args[2] == 'rh'
+
+    load_path = None
+    if args[3] == 'blitz':
+        load_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', 'blitz')
+    if args[3] == 'forty':
+        load_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', 'forty')
+
+
+    env = gym.make(env_name, action_mode=1, reward_hack)
     network = QNetwork(epsilon_decay=0.4)
-    network.load()
+    if load_path:
+        network.load(load_path)
 
     running = True
     total_games = 0
@@ -34,4 +51,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.args)
