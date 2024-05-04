@@ -89,7 +89,7 @@ class EvalBlitzEnv(gym.Env):
         a = self.game.board.get_possible_states()
         # [print(x) for x in a]
         # [print(x) for x in self.game.board.get_possible_states()]
-        self.frame_count += 0
+        self.frame_count = 0
         self.line_count = 0
         if self.view:
             self.view.seconds = 0

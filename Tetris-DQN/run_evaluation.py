@@ -44,7 +44,8 @@ def main(args):
     average_line_cleared = 0
     time_taken = 0
     average_score = 0
-    for i in range(5):
+    num_trials = 20
+    for i in range(num_trials):
         done = False
         
 
@@ -63,18 +64,17 @@ def main(args):
                     if event.key == pygame.K_RETURN:
                         display = not display
             if done:
-                line_count = info['lines']
                 frames_per_game = info['frames']
-                average_line_cleared += line_count
+                average_line_cleared += info['lines']
                 time_taken += frames_per_game
                 average_score += info['score']
                 obs = env.reset()
 
     env.close()
 
-    print(f'Average games frames per game {time_taken/5}')
-    print(f'Average lines cleared per game {average_line_cleared/5}')
-    print(f'Average Score per game {average_score/5}')
+    print(f'Average games frames per game {time_taken/num_trials}')
+    print(f'Average lines cleared per game {average_line_cleared/num_trials}')
+    print(f'Average Score per game {average_score/num_trials}')
 
 
 if __name__ == '__main__':
