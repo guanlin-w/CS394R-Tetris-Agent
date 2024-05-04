@@ -1,3 +1,5 @@
 __pycache__/
 /models/*
 /logs/*
+Tetris-DQN/gym_tetris/ai/logs/
+Tetris-DQN/gym_tetris/ai/weights/
