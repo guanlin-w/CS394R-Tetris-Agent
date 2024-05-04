@@ -21,8 +21,9 @@ def main(args):
     if args[3] == 'forty':
         load_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', 'forty')
 
+    
 
-    env = gym.make(env_name, action_mode=1, reward_hack)
+    env = gym.make(env_name, reward_hack=reward_hack,action_mode=1)
     network = QNetwork(epsilon_decay=0.4)
     if load_path:
         network.load(load_path)
@@ -31,10 +32,17 @@ def main(args):
     total_games = 0
     total_steps = 0
     for ij in range(240):
-        steps, rewards, scores = network.train(env, episodes=25)
+        save_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', args[1], str(ij)+'.weights.h5')
+        steps, rewards, scores,converged = network.train(env, episodes=25)
+        if converged:
+            # run a final save to get the final model
+            save_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', args[1],'final.weights.h5')
+            network.save()
+            print("The model has met the convergence criteria")
+            return
         total_games += len(scores)
         total_steps += steps
-        network.save(ij)
+        network.save(save_path)
         print("==================")
         print("* Total Games: ", total_games)
         print("* Total Steps: ", total_steps)
@@ -47,6 +55,8 @@ def main(args):
         print("* Max: ", max(rewards), "/", max(scores))
         print("==================")
 
+    #
+    print("The model has run all 240 checkpoints")
     env.close()
 
 

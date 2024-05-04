@@ -102,17 +102,19 @@ class QNetwork:
 
         After every episode it trains the model with the 20000 most recent experiences.
 
-        :rtype tuple of (steps, rewards, scoores). steps is an integer, rewards and scores are an integer list
+        :rtype tuple of (steps, rewards, scores). steps is an integer, rewards and scores are an integer list
         """
         rewards = []
         scores = []
         steps = 0
+        action_threshold = 200000
         for episode in range(episodes):
             obs = env.reset()
             # print(obs)
             previous_state = env.game.board.get_info([])
             done = False
             total_reward = 0
+            num_action = 0
             while not done:
                 sa = self.act(obs)
                 action = sa[:2]
@@ -123,12 +125,21 @@ class QNetwork:
                 steps += 1
                 total_reward += reward
 
+                # we converged when the game is still going beyond the action_threshold
+                # based on the number of steps between 25 episodes
+                # we chose this based on what we saw for the rh versions of the run which
+                # was ~120000 for the 25 episodes
+                if steps >= action_threshold:
+                    return [steps,rewards,scores,True]
+
             rewards.append(total_reward)
             scores.append(env.game.score)
 
-            self.learn()
+            # network update here
+            self.learn()            
+            
 
-        return [steps, rewards, scores]
+        return [steps, rewards, scores,False]
 
     def load(self, load_path):
         """Load the weights."""
