@@ -5,6 +5,7 @@ from statistics import mean, median
 from gym_tetris.ai.QNetwork import QNetwork
 
 import os
+import sys
 
 def main(args):
     env_name = None
@@ -17,11 +18,11 @@ def main(args):
 
     load_path = None
     if args[3] == 'blitz':
-        load_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', 'blitz')
+        load_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', 'blitz', '98' + '.weights.h5')
     if args[3] == 'forty':
-        load_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', 'forty')
+        load_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', 'forty', '115' + '.weights.h5')
 
-    
+    save_dir = 'forty-forty2'
 
     env = gym.make(env_name, reward_hack=reward_hack,action_mode=1)
     network = QNetwork(epsilon_decay=0.4)
@@ -32,11 +33,11 @@ def main(args):
     total_games = 0
     total_steps = 0
     for ij in range(240):
-        save_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', args[1], str(ij)+'.weights.h5')
+        save_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', save_dir, str(ij)+'.weights.h5')
         steps, rewards, scores,converged = network.train(env, episodes=25)
         if converged:
             # run a final save to get the final model
-            save_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', args[1],'final.weights.h5')
+            save_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', save_dir,'final.weights.h5')
             network.save(save_path)
             print("The model has met the convergence criteria")
             return
@@ -61,4 +62,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(sys.args)
+    main(sys.argv)
