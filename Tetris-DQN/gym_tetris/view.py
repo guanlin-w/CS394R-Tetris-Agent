@@ -36,6 +36,9 @@ class View:
         self.ms_time = 0
         self.seconds = 0
 
+    def reset_timer(self):
+        self.ms_time = 0
+        self.seconds = 0
     def draw(self, game):
         """"Draws everything."""
         self.clock.tick(FRAMES_PER_SECOND)

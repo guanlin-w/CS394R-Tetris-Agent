@@ -114,7 +114,6 @@ class QNetwork:
             previous_state = env.game.board.get_info([])
             done = False
             total_reward = 0
-            num_action = 0
             while not done:
                 sa = self.act(obs)
                 action = sa[:2]
