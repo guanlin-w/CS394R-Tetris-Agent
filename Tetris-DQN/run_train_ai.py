@@ -37,7 +37,7 @@ def main(args):
         if converged:
             # run a final save to get the final model
             save_path = os.path.join('gym_tetris', 'ai', 'weights', 'DQN', args[1],'final.weights.h5')
-            network.save()
+            network.save(save_path)
             print("The model has met the convergence criteria")
             return
         total_games += len(scores)
