@@ -2,5 +2,4 @@ gym
 numpy
 pygame
 tensorflow
-tensorflow-gpu
 tensorboard

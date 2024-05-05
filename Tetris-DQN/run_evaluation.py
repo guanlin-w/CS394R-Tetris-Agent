@@ -96,7 +96,7 @@ def main(args):
                 time_taken += frames_per_game
                 average_score += info['score']
 
-                if line_count >= 40:
+                if info['lines'] >= 40 or info['frames'] >= 1990:
                     frames_list.append(info['frames'])
                     lines_list.append(info['lines'])
                     score_list.append(info['score'])
