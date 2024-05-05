@@ -63,7 +63,6 @@ def main(args):
     average_line_cleared = 0
     time_taken = 0
     average_score = 0
-
     num_trials = 20
     # frames_arr = np.zeros(num_trials)
     # lines_arr = np.zeros(num_trials)
@@ -92,9 +91,8 @@ def main(args):
                     if event.key == pygame.K_RETURN:
                         display = not display
             if done:
-                line_count = info['lines']
                 frames_per_game = info['frames']
-                average_line_cleared += line_count
+                average_line_cleared += info['lines']
                 time_taken += frames_per_game
                 average_score += info['score']
 
